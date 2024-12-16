@@ -3,8 +3,8 @@ import get_location_id
 import get_popular_posts
 
 
-def is_scraped(username):
-    with open('success.txt', 'r') as f:
+def is_scraped(username, filename: str):
+    with open(filename, 'r') as f:
         usernames = f.readlines()
         usernames = [u.strip() for u in usernames]
 
@@ -19,7 +19,7 @@ def start():
         usernames = f.readlines()
         usernames = [txt.strip() for txt in usernames]
     for username in usernames:
-        if is_scraped(username):
+        if is_scraped(username, 'success.txt'):
             print(f'Username ({username}) scraped')
         else:
             try:
@@ -29,9 +29,13 @@ def start():
                     get_popular_posts.start(location_id, username)
                 with open('success.txt', 'a') as f:
                     f.write(f'{username}\n')
-            except:
-                with open('fails.txt', 'a') as f:
-                    f.write(f'{username}\n')
+            except Exception as e:
+                print(f'Error: {e}')
+                if is_scraped(username, 'fails.txt'):
+                    pass
+                else:
+                    with open('fails.txt', 'a') as f:
+                        f.write(f'{username}\n')
 
 
 
