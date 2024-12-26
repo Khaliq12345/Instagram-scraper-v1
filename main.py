@@ -38,6 +38,5 @@ def start():
                         f.write(f'{username}\n')
 
 
-
 if __name__ == '__main__':
     start()
