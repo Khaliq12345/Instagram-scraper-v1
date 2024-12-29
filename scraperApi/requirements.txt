@@ -21,3 +21,4 @@ selectolax
 supabase
 uvloop
 watchfiles
+easyocr

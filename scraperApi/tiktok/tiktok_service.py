@@ -133,6 +133,5 @@ def main(post_url: str):
 
 
 if __name__ == '__main__':
-    #pyk.specify_browser('firefox')
     item = tiktok_start('https://www.tiktok.com/@micro2rouen/video/7444916723704171798?is_from_webapp=1')
     print(item)

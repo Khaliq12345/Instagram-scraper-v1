@@ -4,11 +4,22 @@ import os
 import pytesseract
 from PIL import Image
 import pandas as pd
+import easyocr
+
+reader = easyocr.Reader(['en', 'fr'])
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = Path(CURRENT_DIR).parent.as_posix()
 os.makedirs(os.path.join(PARENT_DIR, 'outputs'), exist_ok=True)
 OUTPUT_FILE = os.path.join(PARENT_DIR, 'outputs/outputs.csv')
+
+
+def ocr_image(image_path: str):
+    result = reader.readtext(image_path)
+    text = ''
+    for detection in result:
+        text += f' {detection[1]}'
+    return text.strip()
 
 def is_exists(post_id: str):
     try:
@@ -62,6 +73,7 @@ def convert_image_to_text(folder: str):
     image_text = ''
     for idx, img in enumerate(image_path):
         print(f'Image: {idx}')
-        image_text = pytesseract.image_to_string(Image.open(f'{folder}/{img}'))
-        image_text += f' {image_text}'
+        image_text = ocr_image(f'{folder}/{img}')
+        if image_text not in image_text:
+            image_text += f' {image_text}'
     return image_text
