@@ -101,7 +101,10 @@ def instagram_start(post_url: str):
     post = Post.from_shortcode(L.context, short_code)
     L.download_post(post, target=short_code)
     #-------------------------------
-    shutil.move(short_code, CURRENT_DIR)
+    try:
+        shutil.move(short_code, CURRENT_DIR)
+    except:
+        pass
     POST_FOLDER = os.path.join(CURRENT_DIR, short_code)
     POST_FOLDER_IMAGES = os.path.join(POST_FOLDER, 'images')
     os.makedirs(POST_FOLDER_IMAGES, exist_ok=True)

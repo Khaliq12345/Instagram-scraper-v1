@@ -12,6 +12,8 @@ from openai import OpenAI
 import os
 import shutil
 from concurrent.futures import ThreadPoolExecutor
+import browser_cookie3
+pyk.specify_browser('firefox')
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 TIKTOK_OUTPUT_FILE = os.path.join(CURRENT_DIR, 'video_data.csv')
@@ -131,5 +133,6 @@ def main(post_url: str):
 
 
 if __name__ == '__main__':
+    #pyk.specify_browser('firefox')
     item = tiktok_start('https://www.tiktok.com/@micro2rouen/video/7444916723704171798?is_from_webapp=1')
     print(item)
