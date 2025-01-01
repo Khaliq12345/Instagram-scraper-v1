@@ -7,22 +7,23 @@ from tiktok import tiktok_service
 from instagram import instagram_service
 from fastapi import FastAPI
 from pydantic import BaseModel
+from typing import Any
 
 class TextExtraction(BaseModel):
-    post_id: str|None = None
-    text_detected: str|None = None
-    caption: str|None = None
-    transcript: str|None = None
-    social: str|None = None
+    post_id: Any = None
+    text_detected: Any = None
+    caption: Any = None
+    transcript: Any = None
+    social: Any = None
 
 
 app = FastAPI()
 
 @app.get('/post/text', response_model=TextExtraction)
-def get_post_text(post_url: str, social: str):
-    if social == 'tiktok':
+def get_post_text(post_url: str):
+    if 'www.tiktok.com' in post_url:
         result = tiktok_service.main(post_url)
-    elif social == 'instagram':
+    elif 'www.instagram.com' in post_url:
         result = instagram_service.main(post_url)
     if result:
         return result

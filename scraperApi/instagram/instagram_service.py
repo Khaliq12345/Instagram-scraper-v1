@@ -11,16 +11,19 @@ import shutil
 from concurrent.futures import ThreadPoolExecutor
 from config import config
 from openai import OpenAI
+import re
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = Path(CURRENT_DIR).parent.as_posix()
 OUTPUT_FILE = os.path.join(PARENT_DIR, 'outputs/outputs.csv')
 
 def get_short_code(post_url: str) -> str|None:
-    url_info = post_url.split('/')[-1]
-    if '?' in url_info:
-        url_info = post_url.split('/')[-2]
-    return url_info
+    pattern = r'/(?:reel|p)/([a-zA-Z0-9_-]+)'
+    match = re.search(pattern, post_url)
+    if match:
+        return match.group(1)
+    else:
+        return None
 
 
 def instagram_transcript(POST_FOLDER: str) -> str|None:
@@ -44,8 +47,8 @@ def instagram_transcript(POST_FOLDER: str) -> str|None:
                 return None
             finally:
                 print(f'Transcription Done')
-            break
-
+    return None
+    
 
 def video_to_text(POST_FOLDER: str, post_name: str):
     print('Started Video text extraction')
@@ -104,7 +107,7 @@ def instagram_start(post_url: str):
     try:
         shutil.move(short_code, CURRENT_DIR)
     except:
-        pass
+        shutil.rmtree(short_code)
     POST_FOLDER = os.path.join(CURRENT_DIR, short_code)
     POST_FOLDER_IMAGES = os.path.join(POST_FOLDER, 'images')
     os.makedirs(POST_FOLDER_IMAGES, exist_ok=True)
@@ -130,6 +133,6 @@ def main(post_url: str):
         return None
 
 
-if __name__ == '__main__':
-    item = main('https://www.instagram.com/instagram/reel/DDxVWElyNbH/?hl=en')
-    print(item)
+# if __name__ == '__main__':
+#     item = main('https://www.instagram.com/instagram/reel/DDxVWElyNbH/?hl=en')
+#     print(item)

@@ -12,7 +12,6 @@ from openai import OpenAI
 import os
 import shutil
 from concurrent.futures import ThreadPoolExecutor
-import browser_cookie3
 pyk.specify_browser('firefox')
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -114,7 +113,10 @@ def tiktok_start(post_url: str):
                     TIKTOK_OUTPUT_FILE,
                     'firefox'
                 )
-                shutil.move(video_file, VIDEOS_FOLDER)
+                try:
+                    shutil.move(video_file, VIDEOS_FOLDER)
+                except:
+                    os.remove(video_file)
                 print(f'Done saving the tiktok post')
                 new_video_file = os.path.join(VIDEOS_FOLDER, video_file)
                 item = start_the_tasks(post_id, video_id, video_name, new_video_file)
@@ -132,6 +134,6 @@ def main(post_url: str):
     return tiktok_start(post_url)
 
 
-if __name__ == '__main__':
-    item = tiktok_start('https://www.tiktok.com/@micro2rouen/video/7444916723704171798?is_from_webapp=1')
-    print(item)
+# if __name__ == '__main__':
+#     item = tiktok_start('https://www.tiktok.com/@micro2rouen/video/7444916723704171798?is_from_webapp=1')
+#     print(item)
