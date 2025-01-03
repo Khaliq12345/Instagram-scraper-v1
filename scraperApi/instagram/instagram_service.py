@@ -13,6 +13,13 @@ from config import config
 from openai import OpenAI
 import re
 
+# username = 'sp0353n6xj'
+# password = 'nh7M8jeqmT4S3sqE~o'
+# os.environ['https_proxy'] = f"http://{username}:{password}@gate.smartproxy.com:10001"
+
+# username = 'sp0353n6xj'
+# #http://sp0353n6xj:nh7M8jeqmT4S3sqE~o@gate.smartproxy.com:10001
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = Path(CURRENT_DIR).parent.as_posix()
 OUTPUT_FILE = os.path.join(PARENT_DIR, 'outputs/outputs.csv')
@@ -133,6 +140,6 @@ def main(post_url: str):
         return None
 
 
-# if __name__ == '__main__':
-#     item = main('https://www.instagram.com/instagram/reel/DDxVWElyNbH/?hl=en')
-#     print(item)
+if __name__ == '__main__':
+    item = main('https://www.instagram.com/hind_hela/reel/DEK5DoDoWA2/')
+    print(item)

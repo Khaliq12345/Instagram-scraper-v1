@@ -1,19 +1,16 @@
 import cv2
 from pathlib import Path
 import os
-import pytesseract
-from PIL import Image
 import pandas as pd
-import concurrent.futures
 from paddleocr import PaddleOCR
 from openai import OpenAI
+import supabase
+from config.config import SUPABASE_KEY, SUPABASE_URL
 
 ocr = PaddleOCR(use_angle_cls=True, lang='en')
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = Path(CURRENT_DIR).parent.as_posix()
-os.makedirs(os.path.join(PARENT_DIR, 'outputs'), exist_ok=True)
-OUTPUT_FILE = os.path.join(PARENT_DIR, 'outputs/outputs.csv')
 
 
 def ocr_image(ocr, image_path):
@@ -34,24 +31,24 @@ def ocr_image(ocr, image_path):
 
 def is_exists(post_id: str):
     try:
-        if Path(OUTPUT_FILE).exists():
-            df = pd.read_csv(OUTPUT_FILE)
-            filtered_df = df[df['post_id'] == post_id]
-            if filtered_df.empty:
-                return False
-            return filtered_df.iloc[0, :].to_dict()
+        client = supabase.Client(SUPABASE_URL, SUPABASE_KEY)
+        response = client.table('scraper_out').select('*').eq('post_id', post_id).execute()
+        if response.data:
+            return response.data[0]
         else:
             return False
-    except:
+    except Exception as e:
+        print(f'Error: {e}')
         return False
 
 
 def save_or_append(item: dict):
-    df = pd.DataFrame(item, index=[0])
-    if Path(OUTPUT_FILE).exists():
-        df.to_csv(OUTPUT_FILE, index=False, header=None, mode='a')
-    else:
-        df.to_csv(OUTPUT_FILE, index=False)
+    try:
+        client = supabase.Client(SUPABASE_URL, SUPABASE_KEY)
+        client.table('scraper_out').insert(item).execute()
+    except Exception as e:
+        print(f'Error: {e}')
+
 
 #extract frame from videos
 def extract_frames(video_file: str, video_name: str) -> str:
