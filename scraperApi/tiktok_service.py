@@ -1,5 +1,4 @@
-from camoufox.async_api import AsyncCamoufox
-from playwright.async_api import Page
+from playwright.async_api import async_playwright
 from utils import utils
 from concurrent import futures
 import asyncio
@@ -14,7 +13,7 @@ import httpx
 class TiktokBrowserService(FileService):
     def __init__(self, url):
         super().__init__()
-        self.headless = False
+        self.headless = True
         self.url = url
         self.proxy= {
             'server': 'us.smartproxy.com:10000',
@@ -56,8 +55,10 @@ class TiktokBrowserService(FileService):
     async def load_post(self, url: str, post_id: str):
         result = None
         try:
-            browser = await AsyncCamoufox(headless=self.headless).start()
-            page: Page = await browser.new_page(proxy=self.proxy)
+            p = await async_playwright().start()
+            browser = await p.firefox.launch(headless=self.headless)
+            context = await browser.new_context(proxy=self.proxy)
+            page = await context.new_page()
             print('Browser started!')
             await page.goto(url)
             await page.wait_for_timeout(5000)
