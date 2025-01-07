@@ -3,8 +3,8 @@ import os
 from pathlib import Path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from tiktok import tiktok_service
-from instagram import instagram_service
+from scraperApi.tiktok_service import TiktokBrowserService
+from scraperApi.instagram_service import InstagramBrowserService
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import APIKeyHeader
 from typing import Any, Optional, Annotated
@@ -28,9 +28,11 @@ def get_api_key(
 @app.get('/post/text', response_model=TextExtraction)
 def get_post_text(api_key: Annotated[str, Depends(get_api_key)], post_url: str):
     if 'tiktok.com' in post_url:
-        result = tiktok_service.main(post_url)
+        browser_service = TiktokBrowserService(post_url)
+        result = browser_service.main()
     elif 'www.instagram.com' in post_url:
-        result = instagram_service.main(post_url)
+        browser_service = InstagramBrowserService(post_url)
+        result = browser_service.main()
     if result:
         return result
     else:
