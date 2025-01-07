@@ -1,5 +1,6 @@
 #------------------------------
-from playwright.async_api import async_playwright
+from camoufox.async_api import AsyncCamoufox
+from playwright.async_api import Page, async_playwright
 from utils import utils
 from concurrent import futures
 import asyncio
