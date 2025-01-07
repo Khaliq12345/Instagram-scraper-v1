@@ -140,13 +140,3 @@ if __name__ == '__main__':
     bs = InstagramBrowserService(url='https://www.instagram.com/kareem/p/DCZgjs3pL6b/?img_index=1')
     item = bs.main()
     print(item)
-
-
-        
-
-
-
-    
-
-
-

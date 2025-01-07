@@ -57,7 +57,7 @@ class TiktokBrowserService(FileService):
         try:
             p = await async_playwright().start()
             browser = await p.firefox.launch(headless=self.headless)
-            context = await browser.new_context()
+            context = await browser.new_context(proxy=self.proxy)
             page = await context.new_page()
             print('Browser started!')
             await page.goto(url)
