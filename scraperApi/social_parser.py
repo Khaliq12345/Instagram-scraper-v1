@@ -4,6 +4,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from config import config
 import json
 from model import model
+from utils import utils
 
 system_prompt = """
 You are a precise content analyzer specialized in extracting place information from social media content. Follow these instructions exactly:
@@ -48,6 +49,7 @@ If no valid places are found, set contentPlaces to false and return an empty res
 
 def parse_output(json_data: dict) -> model.ResponseModel:
     try:
+        post_id = json_data.get('post_id')
         caption = json_data.get('caption')
         text_detected = json_data.get('text_detected')
         transcript = json_data.get('transcript')
@@ -74,6 +76,9 @@ def parse_output(json_data: dict) -> model.ResponseModel:
         response = chain.invoke({"query": query})
         json_data = json.loads(response.model_dump_json())
         json_data = json.loads(json_data['additional_kwargs']['tool_calls'][0]['function']['arguments'])
+        json_data['post_id'] = post_id
+        utils.save_or_append(json_data, table='parse_output')
         return model.ResponseModel(**json_data)
     except Exception as e:
+        print(f'Error: {e}')
         return model.ResponseModel()

@@ -14,33 +14,16 @@ pyk.specify_browser('firefox')
 
 
 class TiktokBrowserService(FileService):
-    def __init__(self, url):
+    def __init__(self, url, post_id):
         super().__init__()
         self.headless = True
         self.url = url
+        self.post_id = post_id
         self.proxy= {
             'server': 'us.smartproxy.com:10000',
             'username': utils.PROXY_USERNAME,
             'password': utils.PROXY_PASSWORD
         }
-
-
-    def extract_tiktok_id(self, url):
-        if '//vm.' in url:
-            response = httpx.get(
-                url,
-                timeout=None,
-                follow_redirects=True
-            )
-            url = str(response.url)
-        pattern = r'https?://(?:www\.)?tiktok\.com/@([^/]+)/(?:video|photo)/(\d+)(?:\?.*)?'
-        match = re.match(pattern, url)
-        if match:
-            pid = match.group(2)
-            return pid
-        else:
-            return {}
-
 
     def process_video_file(self, result):
         video_path = result.get('video_path')
@@ -97,13 +80,9 @@ class TiktokBrowserService(FileService):
     
 
     def start_service(self):
-        post_id = self.extract_tiktok_id(self.url)
-        if post_id:
-            is_exists = utils.is_exists(f'tiktok_{post_id}')
-            if is_exists:
-                return is_exists
+        if self.post_id:
             print('Loading post')
-            result = self.load_post(self.url, f'tiktok_{post_id}')
+            result = self.load_post(self.url, f'tiktok_{self.post_id}')
             print('Done post')
             output = None
             output = self.process_video_file(result)

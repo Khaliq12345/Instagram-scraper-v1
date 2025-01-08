@@ -10,6 +10,8 @@ from fastapi.security import APIKeyHeader
 from typing import Any, Optional, Annotated
 from config import config
 import social_parser
+from utils import utils
+import json
 
 app = FastAPI()
 API_KEY_NAME = "X-API-Key"
@@ -25,14 +27,36 @@ def get_api_key(
         )
     return api_key
 
+
+def supabase_checker(post_id: str, social: str):
+    is_exists = utils.is_exists(f'{social}_{post_id}')
+    if is_exists:
+        is_parsed = utils.is_exists(f'{social}_{post_id}', 'parse_output')
+        if is_parsed:
+            is_parsed['results'] = [json.loads(item) for item in is_parsed['results']]
+            return is_parsed
+        return social_parser.parse_output(is_exists)
+
+
 @app.get('/post/text', response_model=social_parser.model.ResponseModel)
 def get_post_text(api_key: Annotated[str, Depends(get_api_key)], post_url: str):
+    result = None
     if 'tiktok.com' in post_url:
-        browser_service = TiktokBrowserService(post_url)
+        post_id = utils.extract_tiktok_id(post_url)
+        output = supabase_checker(post_id, 'tiktok')
+        if output:
+            return output
+        browser_service = TiktokBrowserService(post_url, post_id)
         result = browser_service.main()
     elif 'www.instagram.com' in post_url:
-        browser_service = InstagramBrowserService(post_url)
+        post_id = utils.extract_instagram_id(post_url)
+        output = supabase_checker(post_id, 'instagram')
+        if output:
+            return output
+        browser_service = InstagramBrowserService(post_url, post_id)
         result = browser_service.main()
+    else:
+        return social_parser.model.ResponseModel()
     if result:
         print('Starting the parsing of the output')
         return social_parser.parse_output(result)

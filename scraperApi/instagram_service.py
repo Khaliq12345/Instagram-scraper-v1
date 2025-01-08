@@ -8,25 +8,17 @@ import asyncio
 
 
 class InstagramBrowserService(FileService):
-    def __init__(self, url):
+    def __init__(self, url, post_id):
         super().__init__()
         self.headless = True
         self.url = url
+        self.post_id = post_id
         self.proxy= {
             'server': 'us.smartproxy.com:10000',
             'username': utils.PROXY_USERNAME,
             'password': utils.PROXY_PASSWORD
         }
 
-
-    def get_short_code(self, post_url: str) -> str|None:
-        pattern = r'/(?:reel|p)/([a-zA-Z0-9_-]+)'
-        match = re.search(pattern, post_url)
-        if match:
-            return match.group(1)
-        else:
-            return None
-    
 
     def parse_image_post(self, json_data: dict, post_id: str):
         images = []
@@ -59,7 +51,6 @@ class InstagramBrowserService(FileService):
         async_items = []
         result = None
         async with async_playwright() as p:
-            print('Loading post 2')
             browser = await p.firefox.launch(headless=self.headless)
             page = await browser.new_page()
             print('Browser started!')
@@ -103,12 +94,8 @@ class InstagramBrowserService(FileService):
 
 
     async def start_service(self):
-        post_id = self.get_short_code(self.url)
-        if post_id:
-            post_id = f'instagram_{post_id}'
-            is_exists = utils.is_exists(post_id)
-            if is_exists:
-                return is_exists
+        if self.post_id:
+            post_id = f'instagram_{self.post_id}'
             print('Loading post')
             result = await self.load_post(self.url, post_id)
             print('Done post')

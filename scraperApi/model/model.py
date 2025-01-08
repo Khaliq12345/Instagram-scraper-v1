@@ -35,6 +35,6 @@ class ResultItem(BaseModel):
 
 class ResponseModel(BaseModel):
     title: str = Field(description='A short, descriptive title summarizing the post content', default='')
-    contentPlaces: bool = Field(description="Indicates if any places were found in the content", default='')
+    contentPlaces: bool = Field(description="Indicates if any places were found in the content", default=False)
     city: str|None = Field(description='Main city mentioned in the content, if any', default='')
     results: List[ResultItem] = Field(description='Array of places found in the content. Empty if contentPlaces is false', default=[])

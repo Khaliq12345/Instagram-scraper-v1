@@ -3,6 +3,8 @@ import os
 from paddleocr import PaddleOCR
 from openai import OpenAI
 import supabase
+import re
+import httpx
 from config.config import SUPABASE_KEY, SUPABASE_URL, OPENAI_API_KEY, PROXY_PASSWORD, PROXY_USERNAME
 
 ocr = PaddleOCR(use_angle_cls=True, lang='en')
@@ -24,10 +26,10 @@ def ocr_image(image):
     return text
 
 
-def is_exists(post_id: str):
+def is_exists(post_id: str, table: str = 'scraper_out'):
     try:
         client = supabase.Client(SUPABASE_URL, SUPABASE_KEY)
-        response = client.table('scraper_out').select('*').eq('post_id', post_id).execute()
+        response = client.table(table).select('*').eq('post_id', post_id).execute()
         if response.data:
             return response.data[0]
         else:
@@ -37,10 +39,10 @@ def is_exists(post_id: str):
         return False
 
 
-def save_or_append(item: dict):
+def save_or_append(item: dict, table: str = 'scraper_out'):
     try:
         client = supabase.Client(SUPABASE_URL, SUPABASE_KEY)
-        client.table('scraper_out').insert(item).execute()
+        client.table(table).insert(item).execute()
     except Exception as e:
         print(f'Error: {e}')
 
@@ -95,5 +97,28 @@ def transcribe_video(video_file: str):
     finally:
         print(f'Transcription Done')
 
-# text = convert_image_to_text('/home/projects/Instagram-scraper-v1/scraperApi/frames/DED66unSaxr_frames')
-# print(f'Final: {text}')
+
+def extract_tiktok_id(post_url):
+    if '//vm.' in post_url:
+        response = httpx.get(
+            post_url,
+            timeout=None,
+            follow_redirects=True
+        )
+        post_url = str(response.url)
+    pattern = r'https?://(?:www\.)?tiktok\.com/@([^/]+)/(?:video|photo)/(\d+)(?:\?.*)?'
+    match = re.match(pattern, post_url)
+    if match:
+        pid = match.group(2)
+        return pid
+    else:
+        return None
+
+
+def extract_instagram_id(post_url: str) -> str|None:
+    pattern = r'/(?:reel|p)/([a-zA-Z0-9_-]+)'
+    match = re.search(pattern, post_url)
+    if match:
+        return match.group(1)
+    else:
+        return None
