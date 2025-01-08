@@ -1,9 +1,10 @@
 #------------------------------
-from playwright.sync_api import sync_playwright
+from playwright.async_api import async_playwright
 from utils import utils
 from concurrent import futures
 from file_service import FileService
 import re
+import asyncio
 
 
 class InstagramBrowserService(FileService):
@@ -54,28 +55,29 @@ class InstagramBrowserService(FileService):
         return result
     
 
-    def load_post(self, url: str, post_id: str):
+    async def load_post(self, url: str, post_id: str):
         async_items = []
         result = None
-        p = sync_playwright().start()
-        browser = p.firefox.launch(headless=self.headless)
-        page = browser.new_page(proxy=self.proxy)
-        print('Browser started!')
-        page.on('response', lambda response: async_items.append(response.json()) \
-        if response.request.url == 'https://www.instagram.com/graphql/query' else None)
-        page.goto(url)
-        page.wait_for_timeout(5000)
-        for async_item in async_items:
-            try:
-                json_data = async_item
-                json_data['data']['xdt_shortcode_media']
-                if '/p/' in url:
-                    result = self.parse_image_post(json_data, post_id)
-                elif '/reel/' in url:
-                    result = self.parse_video_post(json_data, post_id)
-                return result
-            except:
-                pass
+        async with async_playwright() as p:
+            print('Loading post 2')
+            browser = await p.firefox.launch(headless=self.headless)
+            page = await browser.new_page()
+            print('Browser started!')
+            page.on('response', lambda response: async_items.append(response.json()) \
+            if response.request.url == 'https://www.instagram.com/graphql/query' else None)
+            await page.goto(url)
+            await page.wait_for_timeout(5000)
+            for async_item in async_items:
+                try:
+                    json_data = await async_item
+                    json_data['data']['xdt_shortcode_media']
+                    if '/p/' in url:
+                        result = self.parse_image_post(json_data, post_id)
+                    elif '/reel/' in url:
+                        result = self.parse_video_post(json_data, post_id)
+                    return result
+                except:
+                    pass
 
 
     def start_tasks(self, result: dict, video_file: str = None, image_folder: str = None) -> dict:
@@ -100,7 +102,7 @@ class InstagramBrowserService(FileService):
         return item
 
 
-    def start_service(self):
+    async def start_service(self):
         post_id = self.get_short_code(self.url)
         if post_id:
             post_id = f'instagram_{post_id}'
@@ -108,7 +110,7 @@ class InstagramBrowserService(FileService):
             if is_exists:
                 return is_exists
             print('Loading post')
-            result = self.load_post(self.url, post_id)
+            result = await self.load_post(self.url, post_id)
             print('Done post')
             output = None
             if result.get('type') == 'video':
@@ -127,7 +129,7 @@ class InstagramBrowserService(FileService):
 
     def main(self):
         try:
-            item = self.start_service()
+            item = asyncio.run(self.start_service())
         except Exception as e:
             print(f'Error: {e}')
             item = None
@@ -135,6 +137,6 @@ class InstagramBrowserService(FileService):
 
 
 if __name__ == '__main__':
-    bs = InstagramBrowserService(url='https://www.instagram.com/instagram/reel/DEP8rPUpxjg/?hl=en')
+    bs = InstagramBrowserService(url='https://www.instagram.com/instagram/reel/DDz7mgxSadJ/?hl=en')
     item = bs.main()
     print(item)
