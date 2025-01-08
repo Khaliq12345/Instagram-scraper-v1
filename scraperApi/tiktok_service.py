@@ -128,7 +128,7 @@ class TiktokBrowserService(FileService):
 
 if __name__ == '__main__':
     bs = TiktokBrowserService(
-        url='https://www.tiktok.com/@elomaxmax_tv/video/7438498380797480225'
+        url='https://www.tiktok.com/@onijekujelagos/video/7395894585387420934?q=restaurant&t=1735029668161'
     )
     item = bs.main()
     print(item)
