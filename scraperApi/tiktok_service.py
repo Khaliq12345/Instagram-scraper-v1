@@ -8,6 +8,9 @@ import re
 import os
 from pathlib import Path
 import httpx
+import shutil
+import pyktok as pyk
+pyk.specify_browser('firefox')
 
 
 class TiktokBrowserService(FileService):
@@ -40,39 +43,31 @@ class TiktokBrowserService(FileService):
 
 
     def process_video_file(self, result):
-        video = result.get('video_body')
+        video_path = result.get('video_path')
         post_id = result.get('post_id')
         folder = os.path.join(self.video_folder, post_id)
         Path(folder).mkdir(exist_ok=True)
         file_name = f'{folder}/video.mp4'
-        with open(file_name, 'wb') as file:
-            chunk_size = 8192
-            for i in range(0, len(video), chunk_size):
-                file.write(video[i:i + chunk_size])
+        shutil.move(video_path, file_name)
         return file_name
 
 
-    async def load_post(self, url: str, post_id: str):
+    def load_post(self, url: str, post_id: str):
         result = None
         try:
-            p = await async_playwright().start()
-            browser = await p.firefox.launch(headless=self.headless)
-            context = await browser.new_context(proxy=self.proxy)
-            page = await context.new_page()
-            print('Browser started!')
-            await page.goto(url)
-            await page.wait_for_timeout(5000)
-            if await page.is_visible('button[id="captcha_close_button"]'):
-                await page.click('button[id="captcha_close_button"]')
-            html = await page.content()
-            soup = HTMLParser(html)
-            video_url = soup.css_first('video source').attributes['src']
-            await page.goto(video_url)
-            response = await page.request.get(video_url)
-            body = await response.body()
-            caption = soup.css_first('h1[data-e2e="browse-video-desc"]').text()
+            json_data = pyk.alt_get_tiktok_json(url)
+            try:
+                caption = json_data['__DEFAULT_SCOPE__']['webapp.video-detail']['itemInfo']['itemStruct']['desc']
+            except:
+                caption = None
+            json_data = pyk.save_tiktok(
+                video_url=url,
+                save_video=True,
+                metadata_fn='',
+                return_fns=True
+            )
             result = {
-                'video_body': body,
+                'video_path': json_data['video_fn'],
                 'caption': caption,
                 'post_id': post_id,
                 'type': 'video'
@@ -101,15 +96,14 @@ class TiktokBrowserService(FileService):
         return item
     
 
-    async def start_service(self):
+    def start_service(self):
         post_id = self.extract_tiktok_id(self.url)
         if post_id:
-            post_id = f'tiktok_{post_id}'
-            is_exists = utils.is_exists(post_id)
+            is_exists = utils.is_exists(f'tiktok_{post_id}')
             if is_exists:
                 return is_exists
             print('Loading post')
-            result = await self.load_post(self.url, post_id)
+            result = self.load_post(self.url, post_id)
             print('Done post')
             output = None
             output = self.process_video_file(result)
@@ -125,7 +119,7 @@ class TiktokBrowserService(FileService):
 
     def main(self):
         try:
-            item = asyncio.run(self.start_service())
+            item = self.start_service()
         except Exception as e:
             print(f'Error: {e}')
             item = None
