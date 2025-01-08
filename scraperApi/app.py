@@ -3,13 +3,13 @@ import os
 from pathlib import Path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from scraperApi.tiktok_service import TiktokBrowserService
-from scraperApi.instagram_service import InstagramBrowserService
+from tiktok_service import TiktokBrowserService
+from instagram_service import InstagramBrowserService
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import APIKeyHeader
 from typing import Any, Optional, Annotated
 from config import config
-from model.model import TextExtraction
+import social_parser
 
 app = FastAPI()
 API_KEY_NAME = "X-API-Key"
@@ -25,7 +25,7 @@ def get_api_key(
         )
     return api_key
 
-@app.get('/post/text', response_model=TextExtraction)
+@app.get('/post/text', response_model=social_parser.model.ResponseModel)
 def get_post_text(api_key: Annotated[str, Depends(get_api_key)], post_url: str):
     if 'tiktok.com' in post_url:
         browser_service = TiktokBrowserService(post_url)
@@ -34,9 +34,10 @@ def get_post_text(api_key: Annotated[str, Depends(get_api_key)], post_url: str):
         browser_service = InstagramBrowserService(post_url)
         result = browser_service.main()
     if result:
-        return result
+        print('Starting the parsing of the output')
+        return social_parser.parse_output(result)
     else:
-        return TextExtraction()
+        return social_parser.model.ResponseModel()
 
 # if __name__ == '__main__':
 #     Path('outputs').mkdir(exist_ok=True)
