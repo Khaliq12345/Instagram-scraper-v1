@@ -1,9 +1,7 @@
 #------------------------------
-from camoufox.async_api import AsyncCamoufox
-from playwright.async_api import Page, async_playwright
+from playwright.sync_api import sync_playwright
 from utils import utils
 from concurrent import futures
-import asyncio
 from file_service import FileService
 import re
 
@@ -56,26 +54,25 @@ class InstagramBrowserService(FileService):
         return result
     
 
-    async def load_post(self, url: str, post_id: str):
+    def load_post(self, url: str, post_id: str):
         async_items = []
         result = None
-        p = await async_playwright().start()
-        browser = await p.firefox.launch(headless=self.headless)
-        page = await browser.new_page(proxy=self.proxy)
+        p = sync_playwright().start()
+        browser = p.firefox.launch(headless=self.headless)
+        page = browser.new_page(proxy=self.proxy)
         print('Browser started!')
         page.on('response', lambda response: async_items.append(response.json()) \
         if response.request.url == 'https://www.instagram.com/graphql/query' else None)
-        await page.goto(url)
-        await page.wait_for_timeout(5000)
+        page.goto(url)
+        page.wait_for_timeout(5000)
         for async_item in async_items:
             try:
-                json_data = await async_item
+                json_data = async_item
                 json_data['data']['xdt_shortcode_media']
                 if '/p/' in url:
                     result = self.parse_image_post(json_data, post_id)
                 elif '/reel/' in url:
                     result = self.parse_video_post(json_data, post_id)
-                print('result', result)
                 return result
             except:
                 pass
@@ -103,7 +100,7 @@ class InstagramBrowserService(FileService):
         return item
 
 
-    async def start_service(self):
+    def start_service(self):
         post_id = self.get_short_code(self.url)
         if post_id:
             post_id = f'instagram_{post_id}'
@@ -111,7 +108,7 @@ class InstagramBrowserService(FileService):
             if is_exists:
                 return is_exists
             print('Loading post')
-            result = await self.load_post(self.url, post_id)
+            result = self.load_post(self.url, post_id)
             print('Done post')
             output = None
             if result.get('type') == 'video':
@@ -130,7 +127,7 @@ class InstagramBrowserService(FileService):
 
     def main(self):
         try:
-            item = asyncio.run(self.start_service())
+            item = self.start_service()
         except Exception as e:
             print(f'Error: {e}')
             item = None
@@ -138,6 +135,6 @@ class InstagramBrowserService(FileService):
 
 
 if __name__ == '__main__':
-    bs = InstagramBrowserService(url='https://www.instagram.com/kareem/p/DCZgjs3pL6b/?img_index=1')
+    bs = InstagramBrowserService(url='https://www.instagram.com/instagram/reel/DEP8rPUpxjg/?hl=en')
     item = bs.main()
     print(item)
