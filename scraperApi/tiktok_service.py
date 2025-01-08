@@ -103,7 +103,7 @@ class TiktokBrowserService(FileService):
             if is_exists:
                 return is_exists
             print('Loading post')
-            result = self.load_post(self.url, post_id)
+            result = self.load_post(self.url, f'tiktok_{post_id}')
             print('Done post')
             output = None
             output = self.process_video_file(result)
