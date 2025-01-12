@@ -129,4 +129,4 @@ def extract_instagram_id(post_url: str) -> str|None:
         return None
 
 
-print(extract_frames('/home/projects/Instagram-scraper-v1/scraperApi/outputs/videos/tiktok_7205848380877196550/video.mp4'))
+#print(extract_frames('/home/projects/Instagram-scraper-v1/scraperApi/outputs/videos/tiktok_7205848380877196550/video.mp4'))
