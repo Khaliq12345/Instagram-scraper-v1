@@ -5,7 +5,9 @@ from openai import OpenAI
 import supabase
 import re
 import httpx
-from config.config import SUPABASE_KEY, SUPABASE_URL, OPENAI_API_KEY, PROXY_PASSWORD, PROXY_USERNAME
+import sys, pathlib
+sys.path.append(pathlib.Path(os.getcwd()).parent.as_posix())
+from scraperApi.config.config import SUPABASE_KEY, SUPABASE_URL, OPENAI_API_KEY, PROXY_PASSWORD, PROXY_USERNAME
 
 ocr = PaddleOCR(use_angle_cls=True, lang='en')
 
@@ -60,8 +62,11 @@ def extract_frames(video_file: str) -> str:
         frame_count += 1
         # Only extract frames at the desired frame rate
         if frame_count % int(cap.get(5) / frame_rate) == 0:
-            ocr_text = ocr_image(frame)
-            frame_text = f' {ocr_text}'
+            gray_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            cv2.imwrite(f'test{frame_count}.png', gray_image)
+            ocr_text = ocr_image(gray_image)
+            if ocr_text not in frame_text:
+                frame_text += f' {ocr_text}'
     
     cap.release()
     cv2.destroyAllWindows()
@@ -122,3 +127,6 @@ def extract_instagram_id(post_url: str) -> str|None:
         return match.group(1)
     else:
         return None
+
+
+print(extract_frames('/home/projects/Instagram-scraper-v1/scraperApi/outputs/videos/tiktok_7205848380877196550/video.mp4'))
