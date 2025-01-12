@@ -63,7 +63,6 @@ def extract_frames(video_file: str) -> str:
         # Only extract frames at the desired frame rate
         if frame_count % int(cap.get(5) / frame_rate) == 0:
             gray_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            cv2.imwrite(f'test{frame_count}.png', gray_image)
             ocr_text = ocr_image(gray_image)
             if ocr_text not in frame_text:
                 frame_text += f' {ocr_text}'
