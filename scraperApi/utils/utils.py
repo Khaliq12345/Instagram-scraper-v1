@@ -1,26 +1,20 @@
 import cv2
 import os
-from paddleocr import PaddleOCR
 from openai import OpenAI
 import supabase
 import re
 import httpx
 import sys, pathlib
 sys.path.append(pathlib.Path(os.getcwd()).parent.as_posix())
-from scraperApi.config.config import SUPABASE_KEY, SUPABASE_URL, OPENAI_API_KEY, PROXY_PASSWORD, PROXY_USERNAME
+from config.config import SUPABASE_KEY, SUPABASE_URL, OPENAI_API_KEY, PROXY_PASSWORD, PROXY_USERNAME
+import easyocr
 
 
-def ocr_image(ocr: PaddleOCR, image):
+def ocr_image(reader, image):
     text = ''
     try:
-        result = ocr.ocr(image, cls=True)
-        for idx in range(len(result)):
-            res = result[idx]
-            try:
-                for line in res:
-                    text += f' {line[-1][0]}'
-            except:
-                pass
+        outputs = reader.readtext(image, detail=0)
+        text = ' '.join(outputs)
     except:
         pass
     return text
@@ -49,7 +43,7 @@ def save_or_append(item: dict, table: str = 'scraper_out'):
 
 #extract frame from videos
 def extract_frames(video_file: str) -> str:
-    ocr = PaddleOCR(use_angle_cls=True, lang='en')
+    reader = easyocr.Reader(['en', 'de'])
     frame_text = ''
     cap = cv2.VideoCapture(video_file)
     frame_rate = 1  # Desired frame rate (1 frame every 0.5 seconds)
@@ -62,10 +56,9 @@ def extract_frames(video_file: str) -> str:
         # Only extract frames at the desired frame rate
         if frame_count % int(cap.get(5) / frame_rate) == 0:
             gray_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            ocr_text = ocr_image(ocr, gray_image)
+            ocr_text = ocr_image(reader, gray_image)
             if ocr_text not in frame_text:
                 frame_text += f' {ocr_text}'
-    
     cap.release()
     cv2.destroyAllWindows()
     return frame_text
@@ -73,11 +66,11 @@ def extract_frames(video_file: str) -> str:
 
 #convert image to text
 def convert_image_to_text(folder: str):
-    ocr = PaddleOCR(use_angle_cls=True, lang='en')
+    reader = easyocr.Reader(['en', 'de'])
     image_path = os.listdir(folder)
     final_text = ''
     for idx, img in enumerate(image_path):
-        image_text = ocr_image(ocr, f'{folder}/{img}')
+        image_text = ocr_image(reader, f'{folder}/{img}')
         print(f'Image {idx}', image_text)
         if image_text not in final_text:
             final_text += f' {image_text}'
@@ -128,4 +121,4 @@ def extract_instagram_id(post_url: str) -> str|None:
         return None
 
 
-#print(extract_frames('/home/projects/Instagram-scraper-v1/scraperApi/outputs/videos/tiktok_7205848380877196550/video.mp4'))
+#print(extract_frames('/root/projects/Instagram-scraper-v1/scraperApi/outputs/videos/tiktok_7363316545226935585/video.mp4'))
