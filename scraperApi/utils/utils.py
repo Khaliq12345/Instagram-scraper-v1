@@ -1,3 +1,4 @@
+import concurrent.futures
 import cv2
 import os
 from openai import OpenAI
@@ -8,6 +9,8 @@ import sys, pathlib
 sys.path.append(pathlib.Path(os.getcwd()).parent.as_posix())
 from config.config import SUPABASE_KEY, SUPABASE_URL, OPENAI_API_KEY, PROXY_PASSWORD, PROXY_USERNAME
 import easyocr
+from concurrent.futures import ThreadPoolExecutor
+import concurrent
 
 
 def ocr_image(reader, image):
@@ -40,14 +43,34 @@ def save_or_append(item: dict, table: str = 'scraper_out'):
     except Exception as e:
         print(f'Error: {e}')
 
+def process_frames_in_order(reader, frames):
+    try:
+        with ThreadPoolExecutor() as worker:
+            futures = [worker.submit(ocr_image, reader, frame) for frame in frames]
+            future_to_index = {future: idx for idx, future in enumerate(futures)}
+            results_with_index = []
+            for future in concurrent.futures.as_completed(futures):
+                index = future_to_index[future]
+                result = future.result()
+                results_with_index.append((index, result))
+            results_with_index.sort(key=lambda x: x[0])
+            frame_text = ''
+            for _, ocr_text in results_with_index:
+                if ocr_text not in frame_text:
+                    frame_text += f' {ocr_text}'
+            
+            return frame_text.strip()
+    except Exception as e:
+        print(f'Error: {e}')
+        return ''
 
 #extract frame from videos
 def extract_frames(video_file: str) -> str:
     reader = easyocr.Reader(['en', 'de'])
-    frame_text = ''
     cap = cv2.VideoCapture(video_file)
     frame_rate = 1  # Desired frame rate (1 frame every 0.5 seconds)
     frame_count = 0
+    frames = []
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -56,9 +79,9 @@ def extract_frames(video_file: str) -> str:
         # Only extract frames at the desired frame rate
         if frame_count % int(cap.get(5) / frame_rate) == 0:
             gray_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            ocr_text = ocr_image(reader, gray_image)
-            if ocr_text not in frame_text:
-                frame_text += f' {ocr_text}'
+            frames.append(gray_image)
+    
+    frame_text = process_frames_in_order(reader, frames)
     cap.release()
     cv2.destroyAllWindows()
     return frame_text
@@ -121,4 +144,5 @@ def extract_instagram_id(post_url: str) -> str|None:
         return None
 
 
-#print(extract_frames('/root/projects/Instagram-scraper-v1/scraperApi/outputs/videos/tiktok_7363316545226935585/video.mp4'))
+# video_text = extract_frames('/root/projects/Instagram-scraper-v1/scraperApi/outputs/videos/tiktok_7363316545226935585/video.mp4')
+# print(video_text)
