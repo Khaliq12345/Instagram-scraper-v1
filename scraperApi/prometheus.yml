@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'social-api'
+    static_configs:
+      - targets: ['social-api:5000']

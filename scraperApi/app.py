@@ -12,10 +12,13 @@ from config import config
 import social_parser
 from utils import utils
 import json
+import uvicorn
+from prometheus_fastapi_instrumentator import Instrumentator
 
 app = FastAPI()
 API_KEY_NAME = "X-API-Key"
 api_key_header = APIKeyHeader(name=API_KEY_NAME)
+Instrumentator().instrument(app).expose(app)
 
 def get_api_key(
     api_key: Optional[str] = Depends(api_key_header)
@@ -63,7 +66,8 @@ def get_post_text(api_key: Annotated[str, Depends(get_api_key)], post_url: str):
     else:
         return social_parser.model.ResponseModel()
 
-# if __name__ == '__main__':
-#     Path('outputs').mkdir(exist_ok=True)
-#     result = tiktok_service.main('https://www.tiktok.com/@micro2rouen/video/7444916723704171798?is_from_webapp=1')
-#     print(result)
+if __name__ == '__main__':
+    # Path('outputs').mkdir(exist_ok=True)
+    # result = tiktok_service.main('https://www.tiktok.com/@micro2rouen/video/7444916723704171798?is_from_webapp=1')
+    # print(result)
+    uvicorn.run(app, host="0.0.0.0", port=5000)

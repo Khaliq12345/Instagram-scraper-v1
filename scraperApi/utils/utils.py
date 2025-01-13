@@ -9,10 +9,8 @@ import sys, pathlib
 sys.path.append(pathlib.Path(os.getcwd()).parent.as_posix())
 from scraperApi.config.config import SUPABASE_KEY, SUPABASE_URL, OPENAI_API_KEY, PROXY_PASSWORD, PROXY_USERNAME
 
-ocr = PaddleOCR(use_angle_cls=True, lang='en')
 
-
-def ocr_image(image):
+def ocr_image(ocr: PaddleOCR, image):
     text = ''
     try:
         result = ocr.ocr(image, cls=True)
@@ -51,6 +49,7 @@ def save_or_append(item: dict, table: str = 'scraper_out'):
 
 #extract frame from videos
 def extract_frames(video_file: str) -> str:
+    ocr = PaddleOCR(use_angle_cls=True, lang='en')
     frame_text = ''
     cap = cv2.VideoCapture(video_file)
     frame_rate = 1  # Desired frame rate (1 frame every 0.5 seconds)
@@ -63,7 +62,7 @@ def extract_frames(video_file: str) -> str:
         # Only extract frames at the desired frame rate
         if frame_count % int(cap.get(5) / frame_rate) == 0:
             gray_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            ocr_text = ocr_image(gray_image)
+            ocr_text = ocr_image(ocr, gray_image)
             if ocr_text not in frame_text:
                 frame_text += f' {ocr_text}'
     
@@ -74,10 +73,11 @@ def extract_frames(video_file: str) -> str:
 
 #convert image to text
 def convert_image_to_text(folder: str):
+    ocr = PaddleOCR(use_angle_cls=True, lang='en')
     image_path = os.listdir(folder)
     final_text = ''
     for idx, img in enumerate(image_path):
-        image_text = ocr_image(f'{folder}/{img}')
+        image_text = ocr_image(ocr, f'{folder}/{img}')
         print(f'Image {idx}', image_text)
         if image_text not in final_text:
             final_text += f' {image_text}'
