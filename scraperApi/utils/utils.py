@@ -15,7 +15,7 @@ from google.cloud import vision
 from google.oauth2 import service_account
 
 CREDENTIALS = service_account.Credentials.from_service_account_file(
-	filename='cred.json',
+	filename='./utils/cred.json',
 	scopes=["https://www.googleapis.com/auth/cloud-platform"])
 
 
@@ -26,11 +26,11 @@ def ocr_image_google(image):
         image = vision.Image(content=image)
         response = client.text_detection(image)
         text = " ".join([x.description for x in response.text_annotations])
+        print(text)
         return text
     except:
         pass
     return text
-
 
 def ocr_image(ocr: PaddleOCR, image):
     text = ''
@@ -47,7 +47,6 @@ def ocr_image(ocr: PaddleOCR, image):
         pass
     return text
 
-
 def is_exists(post_id: str, table: str = 'scraper_out'):
     try:
         client = supabase.Client(SUPABASE_URL, SUPABASE_KEY)
@@ -59,7 +58,6 @@ def is_exists(post_id: str, table: str = 'scraper_out'):
     except Exception as e:
         print(f'Error: {e}')
         return False
-
 
 def save_or_append(item: dict, table: str = 'scraper_out'):
     try:
@@ -111,7 +109,6 @@ def extract_frames(video_file: str) -> str:
     cap.release()
     cv2.destroyAllWindows()
     return frame_text
-
 
 #convert image to text
 def convert_image_to_text(folder: str):
