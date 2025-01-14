@@ -8,16 +8,41 @@ import httpx
 import sys, pathlib
 sys.path.append(pathlib.Path(os.getcwd()).parent.as_posix())
 from config.config import SUPABASE_KEY, SUPABASE_URL, OPENAI_API_KEY, PROXY_PASSWORD, PROXY_USERNAME
-import easyocr
+from paddleocr import PaddleOCR
 from concurrent.futures import ThreadPoolExecutor
 import concurrent
+from google.cloud import vision
+from google.oauth2 import service_account
+
+CREDENTIALS = service_account.Credentials.from_service_account_file(
+	filename='cred.json',
+	scopes=["https://www.googleapis.com/auth/cloud-platform"])
 
 
-def ocr_image(reader, image):
+def ocr_image_google(image):
     text = ''
     try:
-        outputs = reader.readtext(image, detail=0)
-        text = ' '.join(outputs)
+        client = vision.ImageAnnotatorClient(credentials=CREDENTIALS)
+        image = vision.Image(content=image)
+        response = client.text_detection(image)
+        text = " ".join([x.description for x in response.text_annotations])
+        return text
+    except:
+        pass
+    return text
+
+
+def ocr_image(ocr: PaddleOCR, image):
+    text = ''
+    try:
+        result = ocr.ocr(image, cls=True)
+        for idx in range(len(result)):
+            res = result[idx]
+            try:
+                for line in res:
+                    text += f' {line[-1][0]}'
+            except:
+                pass
     except:
         pass
     return text
@@ -43,10 +68,10 @@ def save_or_append(item: dict, table: str = 'scraper_out'):
     except Exception as e:
         print(f'Error: {e}')
 
-def process_frames_in_order(reader, frames):
+def process_frames_in_order(frames):
     try:
         with ThreadPoolExecutor() as worker:
-            futures = [worker.submit(ocr_image, reader, frame) for frame in frames]
+            futures = [worker.submit(ocr_image_google, frame) for frame in frames]
             future_to_index = {future: idx for idx, future in enumerate(futures)}
             results_with_index = []
             for future in concurrent.futures.as_completed(futures):
@@ -66,7 +91,6 @@ def process_frames_in_order(reader, frames):
 
 #extract frame from videos
 def extract_frames(video_file: str) -> str:
-    reader = easyocr.Reader(['en', 'de'])
     cap = cv2.VideoCapture(video_file)
     frame_rate = 1  # Desired frame rate (1 frame every 0.5 seconds)
     frame_count = 0
@@ -78,10 +102,12 @@ def extract_frames(video_file: str) -> str:
         frame_count += 1
         # Only extract frames at the desired frame rate
         if frame_count % int(cap.get(5) / frame_rate) == 0:
-            gray_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            frames.append(gray_image)
-    
-    frame_text = process_frames_in_order(reader, frames)
+            success, encoded_image = cv2.imencode('.png', frame)
+            if success:
+                content = encoded_image.tobytes()
+                frames.append(content)
+    print(f'Total frames: {len(frames)}')
+    frame_text = process_frames_in_order(frames)
     cap.release()
     cv2.destroyAllWindows()
     return frame_text
@@ -89,11 +115,11 @@ def extract_frames(video_file: str) -> str:
 
 #convert image to text
 def convert_image_to_text(folder: str):
-    reader = easyocr.Reader(['en', 'de'])
+    ocr = PaddleOCR(use_angle_cls=True, lang='en')
     image_path = os.listdir(folder)
     final_text = ''
     for idx, img in enumerate(image_path):
-        image_text = ocr_image(reader, f'{folder}/{img}')
+        image_text = ocr_image(ocr, f'{folder}/{img}')
         print(f'Image {idx}', image_text)
         if image_text not in final_text:
             final_text += f' {image_text}'
@@ -144,5 +170,5 @@ def extract_instagram_id(post_url: str) -> str|None:
         return None
 
 
-# video_text = extract_frames('/root/projects/Instagram-scraper-v1/scraperApi/outputs/videos/tiktok_7363316545226935585/video.mp4')
+# video_text = extract_frames('/media/khaliq/New Volume/Documents/Python Projects/khaliq/Upwork Projects/InstagramProject/scraperApi/outputs/videos/tiktok_7363316545226935585/video.mp4')
 # print(video_text)
