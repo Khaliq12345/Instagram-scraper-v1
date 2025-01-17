@@ -26,11 +26,11 @@ def ocr_image_google(image):
         image = vision.Image(content=image)
         response = client.text_detection(image)
         text = " ".join([x.description for x in response.text_annotations])
+        print(text)
         return text
     except:
         pass
     return text
-
 
 def ocr_image(ocr: PaddleOCR, image):
     text = ''
@@ -46,7 +46,6 @@ def ocr_image(ocr: PaddleOCR, image):
     except:
         pass
     return text
-
 
 def is_exists(post_id: str, table: str = 'scraper_out'):
     try:
@@ -111,7 +110,6 @@ def extract_frames(video_file: str) -> str:
     cap.release()
     cv2.destroyAllWindows()
     return frame_text
-
 
 #convert image to text
 def convert_image_to_text(folder: str):

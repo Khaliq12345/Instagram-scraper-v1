@@ -9,10 +9,11 @@ prometheus-fastapi-instrumentator
 opencv-python
 supabase
 langchain-openai
-paddlepaddle-gpu
+paddlepaddle
 paddleocr
 python-dotenv
 browser-cookie3
 pandas
 TikTokApi
-easyocr
+google-cloud-vision
+setuptools
