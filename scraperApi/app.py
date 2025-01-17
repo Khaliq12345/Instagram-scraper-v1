@@ -86,4 +86,4 @@ if __name__ == '__main__':
     # Path('outputs').mkdir(exist_ok=True)
     # result = tiktok_service.main('https://www.tiktok.com/@micro2rouen/video/7444916723704171798?is_from_webapp=1')
     # print(result)
-    uvicorn.run(app, host="0.0.0.0", port=5500)
+    uvicorn.run(app, host="0.0.0.0", port=5000)
