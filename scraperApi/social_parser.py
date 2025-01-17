@@ -77,7 +77,7 @@ def parse_output(json_data: dict) -> model.ResponseModel:
         json_data = json.loads(response.model_dump_json())
         json_data = json.loads(json_data['additional_kwargs']['tool_calls'][0]['function']['arguments'])
         json_data['post_id'] = post_id
-        utils.save_or_append(json_data, table='parse_output')
+        #utils.save_or_append(json_data, table='parse_output')
         return model.ResponseModel(**json_data)
     except Exception as e:
         print(f'Error: {e}')

@@ -15,7 +15,7 @@ from google.cloud import vision
 from google.oauth2 import service_account
 
 CREDENTIALS = service_account.Credentials.from_service_account_file(
-	filename='cred.json',
+	filename='./utils/cred.json',
 	scopes=["https://www.googleapis.com/auth/cloud-platform"])
 
 
@@ -61,7 +61,7 @@ def is_exists(post_id: str, table: str = 'scraper_out'):
         return False
 
 
-def save_or_append(item: dict, table: str = 'scraper_out'):
+def save_or_append(item: dict|list[dict], table: str = 'scraper_out'):
     try:
         client = supabase.Client(SUPABASE_URL, SUPABASE_KEY)
         client.table(table).insert(item).execute()

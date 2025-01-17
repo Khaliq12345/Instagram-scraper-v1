@@ -39,6 +39,7 @@ class TiktokBrowserService(FileService):
         result = None
         try:
             json_data = pyk.alt_get_tiktok_json(url)
+            username = json_data['__DEFAULT_SCOPE__']['webapp.video-detail']['itemInfo']['itemStruct']['author']['uniqueId']
             try:
                 caption = json_data['__DEFAULT_SCOPE__']['webapp.video-detail']['itemInfo']['itemStruct']['desc']
             except:
@@ -53,6 +54,7 @@ class TiktokBrowserService(FileService):
                 'video_path': json_data['video_fn'],
                 'caption': caption,
                 'post_id': post_id,
+                'username': username,
                 'type': 'video'
             }
             return result
@@ -73,6 +75,7 @@ class TiktokBrowserService(FileService):
             'text_detected': text_detected,
             'caption': result.get('caption'),
             'transcript': transcription,
+            'username': result.get('username'),
             'social': 'tiktok'
         }
         print('Done with the tasks')

@@ -23,6 +23,7 @@ class InstagramBrowserService(FileService):
     def parse_image_post(self, json_data: dict, post_id: str):
         images = []
         caption = ''
+        username = json_data['data']['xdt_shortcode_media']['owner']['username']
         for x in json_data['data']['xdt_shortcode_media']['edge_sidecar_to_children']['edges']:
             images.append(x['node']['display_url'])
             caption += f" {x['node']['accessibility_caption']}"
@@ -30,6 +31,7 @@ class InstagramBrowserService(FileService):
             'images': images,
             'caption': caption,
             'post_id': post_id,
+            'username': username,
             'type': 'image'
         }
         return result
@@ -38,10 +40,12 @@ class InstagramBrowserService(FileService):
     def parse_video_post(self, json_data: dict, post_id: str):
         video = json_data['data']['xdt_shortcode_media']['video_url']
         caption = json_data['data']['xdt_shortcode_media']['edge_media_to_caption']['edges'][0]['node']['text']
+        username = json_data['data']['xdt_shortcode_media']['owner']['username']
         result = {
             'video': video,
             'caption': caption,
             'post_id': post_id,
+            'username': username,
             'type': 'video'
         }
         return result
@@ -87,6 +91,7 @@ class InstagramBrowserService(FileService):
             'text_detected': text_detected,
             'caption': result.get('caption'),
             'transcript': transcription,
+            'username': result.get('username'),
             'social': 'instagram'
         }
         print('Done with the tasks')
@@ -116,7 +121,8 @@ class InstagramBrowserService(FileService):
 
     def main(self):
         try:
-            item = asyncio.run(self.start_service())
+            event_loop = asyncio.new_event_loop()
+            item = event_loop.run_until_complete(self.start_service())
         except Exception as e:
             print(f'Error: {e}')
             item = None
