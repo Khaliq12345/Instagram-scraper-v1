@@ -47,10 +47,10 @@ def ocr_image(ocr: PaddleOCR, image):
         pass
     return text
 
-def is_exists(post_id: str, table: str = 'scraper_out'):
+def is_exists(key: str, value: str, table: str):
     try:
         client = supabase.Client(SUPABASE_URL, SUPABASE_KEY)
-        response = client.table(table).select('*').eq('post_id', post_id).execute()
+        response = client.table(table).select('*').eq(key, value).execute()
         if response.data:
             return response.data[0]
         else:
@@ -59,8 +59,7 @@ def is_exists(post_id: str, table: str = 'scraper_out'):
         print(f'Error: {e}')
         return False
 
-
-def save_or_append(item: dict|list[dict], table: str = 'scraper_out'):
+def save_or_append(item: dict|list[dict], table: str):
     try:
         client = supabase.Client(SUPABASE_URL, SUPABASE_KEY)
         client.table(table).insert(item).execute()

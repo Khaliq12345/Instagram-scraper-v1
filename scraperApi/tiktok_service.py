@@ -92,7 +92,7 @@ class TiktokBrowserService(FileService):
             if output:
                 print(f'File service: {output}')
                 item = self.start_tasks(result, video_file=output)
-                utils.save_or_append(item)
+                #utils.save_or_append(item)
                 return item
         else:
             print('Error with post id')

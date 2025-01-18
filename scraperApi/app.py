@@ -14,6 +14,7 @@ from model.model import Post, ResponseModel
 from utils import utils
 import uvicorn
 from prometheus_fastapi_instrumentator import Instrumentator
+from place_service import get_place_info
 
 app = FastAPI()
 API_KEY_NAME = "X-API-Key"
@@ -31,6 +32,7 @@ def get_api_key(
     return api_key
 
 def parse_result(result: dict):
+    places = []
     if result:
         print('Starting the parsing of the output')
         response: ResponseModel = social_parser.parse_output(result)
@@ -51,32 +53,35 @@ def parse_result(result: dict):
         for result in response.results:
             result_json = jsonable_encoder(result)
             result_json['post_id'] = post.post_id
+            place = get_place_info(result_json.get('place_name'))
+            places.append(place)
             mentions.append(result_json)
         utils.save_or_append(mentions, table='mentions')
-        return post
+        return places
     else:
-        return Post()
+        return []
 
-
-@app.get('/post/text', response_model=Post)
+@app.get('/post/text')
 def get_post_text(api_key: Annotated[str, Depends(get_api_key)], post_url: str):
     result = None
     if 'tiktok.com' in post_url:
         post_id = utils.extract_tiktok_id(post_url)
-        is_exists = utils.is_exists(f'tiktok_{post_id}', 'posts')
+        is_exists = utils.is_exists('post_id', f'tiktok_{post_id}', 'post_creator_view')
         if is_exists:
-            return Post(**is_exists)
-        browser_service = TiktokBrowserService(post_url, post_id)
-        result = browser_service.main()
+            result = is_exists
+        else:
+            browser_service = TiktokBrowserService(post_url, post_id)
+            result = browser_service.main()
     elif 'www.instagram.com' in post_url:
         post_id = utils.extract_instagram_id(post_url)
-        is_exists = utils.is_exists(f'instagram_{post_id}', 'posts')
+        is_exists = utils.is_exists('post_id', f'instagram_{post_id}', 'post_creator_view')
         if is_exists:
-            return Post(**is_exists)
-        browser_service = InstagramBrowserService(post_url, post_id)
-        result = browser_service.main()
+            result = is_exists
+        else:
+            browser_service = InstagramBrowserService(post_url, post_id)
+            result = browser_service.main()
     else:
-        return Post()
+        return []
     return parse_result(result)
 
 if __name__ == '__main__':
@@ -87,3 +92,4 @@ if __name__ == '__main__':
     # result = tiktok_service.main('https://www.tiktok.com/@micro2rouen/video/7444916723704171798?is_from_webapp=1')
     # print(result)
     uvicorn.run(app, host="0.0.0.0", port=5000)
+

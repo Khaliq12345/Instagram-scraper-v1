@@ -2,6 +2,7 @@ playwright
 httpx
 selectolax
 pyktok
+orjson==3.9.15
 langchain
 fastapi
 uvicorn
@@ -17,3 +18,4 @@ pandas
 TikTokApi
 google-cloud-vision
 setuptools
+dateparser
