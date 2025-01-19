@@ -36,7 +36,10 @@ def create_place_info(query: str):
             about_summary = json_data.get['about']['summary']
         except:
             about_summary = None
-        photos_sample = [x.get('photo_url') for x in json_data.get('photos_sample')]
+        if json_data.get('photos_sample'):
+            photos_sample = [x.get('photo_url') for x in json_data.get('photos_sample')]
+        else:
+            photos_sample = []
         item = {
             'place_id': json_data.get('place_id'),
             'name': query,
@@ -81,5 +84,5 @@ def get_place_info(query: str):
         utils.utils.save_or_append(item, 'places')
         return item
 
-# query = 'Café Anna Blum'
+# query = 'SAAN'
 # print(get_place_info(query))

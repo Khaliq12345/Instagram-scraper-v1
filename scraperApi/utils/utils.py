@@ -47,12 +47,15 @@ def ocr_image(ocr: PaddleOCR, image):
         pass
     return text
 
-def is_exists(key: str, value: str, table: str):
+def is_exists(key: str, value: str, table: str, is_single: bool = True):
     try:
         client = supabase.Client(SUPABASE_URL, SUPABASE_KEY)
         response = client.table(table).select('*').eq(key, value).execute()
         if response.data:
-            return response.data[0]
+            if is_single:
+                return response.data[0]
+            else:
+                return response.data
         else:
             return False
     except Exception as e:

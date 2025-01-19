@@ -33,30 +33,46 @@ def get_api_key(
 
 def parse_result(result: dict):
     places = []
+    print('Starting the parsing of the output')
     if result:
-        print('Starting the parsing of the output')
-        response: ResponseModel = social_parser.parse_output(result)
-        post = Post(
-            post_id=result.get('post_id'),
-            text_detected=result.get('text_detected'),
-            caption=result.get('caption'),
-            transcript=result.get('transcript'),
-            social=result.get('social'),
-            city=response.city,
-            title=response.title,
-            creator_id=result.get('username'),
-            content_places=response.contentPlaces
-        )
-        utils.save_or_append({'username': post.creator_id}, table='creators')
-        utils.save_or_append(jsonable_encoder(post), table='posts')
-        mentions = []
-        for result in response.results:
-            result_json = jsonable_encoder(result)
-            result_json['post_id'] = post.post_id
-            place = get_place_info(result_json.get('place_name'))
-            places.append(place)
-            mentions.append(result_json)
-        utils.save_or_append(mentions, table='mentions')
+        is_exists = utils.is_exists('post_id', result.get('post_id'), 'posts')
+        if is_exists:
+            post = Post(**is_exists)
+            mentions = utils.is_exists('post_id', result.get('post_id'), 'mentions', is_single=False)
+            for mention in mentions:
+                query = mention.get('place_name')
+                if query:
+                    query = f"{query} {mention.get('address')}" if mention.get('address') else query
+                    place = get_place_info(query)
+                    places.append(place)
+            return places
+        else:
+            response: ResponseModel = social_parser.parse_output(result)
+            post = Post(
+                post_id=result.get('post_id'),
+                text_detected=result.get('text_detected'),
+                caption=result.get('caption'),
+                transcript=result.get('transcript'),
+                social=result.get('social'),
+                city=response.city,
+                title=response.title,
+                creator_id=result.get('username'),
+                content_places=response.contentPlaces
+            )
+            utils.save_or_append({'username': post.creator_id}, table='creators')
+            utils.save_or_append(jsonable_encoder(post), table='posts')
+            mentions = []
+            for result in response.results:
+                result_json = jsonable_encoder(result)
+                result_json['post_id'] = post.post_id
+                query = result_json.get('place_name')
+                if query:
+                    query = f"{query} {result_json.get('address')}" if result_json.get('address') else query
+                    place = get_place_info(query)
+                    result_json['place_id'] = place.get('place_id')
+                    places.append(place)
+                    mentions.append(result_json)
+            utils.save_or_append(mentions, table='mentions')
         return places
     else:
         return []
